@@ -1,0 +1,14 @@
+description: Ultralytics best model trained on /mnt/c/Users/germa/projects/lct2023/data/dataset_v01.yaml
+author: Ultralytics
+license: AGPL-3.0 https://ultralytics.com/license
+date: '2023-11-07T14:40:58.180279'
+version: 8.0.207
+stride: 32
+task: detect
+batch: 1
+imgsz:
+- 640
+- 640
+names:
+  0: gun
+  1: dummy

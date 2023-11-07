@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "api"
+version = "0.1.0"
+description = ""
+authors = ["Denis Karabaza <denis.karabaza@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+fastapi = "^0.104.1"
+uvicorn = "^0.23.2"
+sqlalchemy = "^2.0.23"
+boto3 = "^1.28.78"
+alembic = "^1.12.1"
+python-dotenv = "^1.0.0"
+mediapipe = "^0.10.7"
+ultralytics = "^8.0.207"
+psycopg2-binary = "^2.9.9"
+opencv-python-headless = "^4.8.1.78"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

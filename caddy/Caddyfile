@@ -1,0 +1,33 @@
+localhost {
+  # basicauth /ui* {
+  #   Bob $2a$14$Zkx19XLiW6VYouLHR5NmfOFU0z2GTNmpkT/5qqR7hx4IjWJPDhjvG
+  # }
+  # basicauth /api* {
+  #   Bob $2a$14$Zkx19XLiW6VYouLHR5NmfOFU0z2GTNmpkT/5qqR7hx4IjWJPDhjvG
+  # }
+
+  redir / /ui
+  handle /ui* {
+    # uri strip_prefix /ui
+    reverse_proxy host.docker.internal:3000 # guns-ui
+  }
+  handle /api/guns* {
+    uri strip_prefix /api/guns
+    reverse_proxy host.docker.internal:8000 # guns-api
+  }
+  handle /api/mmtx* {
+    uri strip_prefix /api/mmtx
+    reverse_proxy host.docker.internal:9997 # mmtx
+  }
+  handle /hls* {
+    uri strip_prefix /hls
+    reverse_proxy host.docker.internal:8888 # mmtx
+  }
+  handle /s3* {
+    uri strip_prefix /s3
+    reverse_proxy host.docker.internal:9000 # minio
+  }
+  respond * 404 {
+    close
+  }
+}
