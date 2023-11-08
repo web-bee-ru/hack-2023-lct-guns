@@ -1,6 +1,8 @@
 import { GunsAPI } from '../generated/GunsAPI';
 import { useQuery } from 'react-query';
 import { taxiosGuns } from '../api';
+import { it } from 'date-fns/locale';
+import { sortBy } from 'lodash';
 
 export enum SourceRowKind {
   Camera = 'Camera',
@@ -38,7 +40,8 @@ export function useSources() {
     for (const source of cameraSources) {
       rows.push({ uid: `Camera-${source.id}`, kind: SourceRowKind.Camera, source });
     }
-    return rows;
+    const sortedRows = sortBy(rows, (it) => it.source.name);
+    return sortedRows;
   });
   return rows;
 }
