@@ -152,7 +152,7 @@ async def infer_video_source_task(
 
             status, frame = cap.retrieve()
 
-            hits = infer(frame)
+            hits = infer(frame, dpt)
             inference = schemas.InferenceCreate(t=pt, hits=hits, source_kind=schemas.SourceKind.Video, source_id=db_source.id)
             crud.create_inference(db, inference)
 
