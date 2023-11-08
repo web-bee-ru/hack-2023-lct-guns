@@ -15,7 +15,7 @@ def infer(frame: np.ndarray, t_seconds: float) -> list[schemas.InferenceHitCreat
     hits: list[schemas.InferenceHitCreate] = []
     for box in res.boxes:
         x, y, w, h = box.xywhn[0].tolist()
-        c = res.boxes[0].conf[0].tolist()
+        c = box.conf[0].tolist()
         hit = schemas.InferenceHitCreate(x=x, y=y, w=w, h=h, c=c)
         hits.append(hit)
 
