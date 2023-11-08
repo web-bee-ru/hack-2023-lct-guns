@@ -8,6 +8,8 @@ import { Box, CircularProgress, FormControl, InputLabel, MenuItem, Paper, Select
 import { GunsAPI } from '../generated/GunsAPI';
 import { max } from 'lodash';
 import Hls from 'hls.js';
+import { minConfidenceAtom } from '../state';
+import { useAtom } from 'jotai';
 
 export const FeedPage: React.FC = () => {
   const sources = useSources();
@@ -243,11 +245,11 @@ interface TimelineProps {
   tKnownStart?: number;
 }
 
-const [cMin, _cMax] = [0.5, 1];
-
 const Timeline: React.FC<TimelineProps> = (props) => {
   const { inferences, videoRef, tKnownStart } = props;
   const ref = React.useRef<HTMLCanvasElement | null>(null);
+
+  const [minConfidence] = useAtom(minConfidenceAtom);
 
   // const [rect, setRect] = React.useState(Rect)
   React.useLayoutEffect(() => {
@@ -294,7 +296,7 @@ const Timeline: React.FC<TimelineProps> = (props) => {
         let rightIdx = leftIdx;
         let hasHits = false;
         while (rightIdx < inferences.length && inferences[rightIdx].t < tLeft + dt) {
-          const hits = inferences[rightIdx].hits.filter((hit) => hit.c >= cMin);
+          const hits = inferences[rightIdx].hits.filter((hit) => hit.c >= minConfidence);
           hasHits = hasHits || hits.length > 0;
           rightIdx++;
         }
@@ -334,7 +336,7 @@ const Timeline: React.FC<TimelineProps> = (props) => {
     return () => {
       stop = true;
     };
-  }, [inferences, tKnownStart]);
+  }, [inferences, tKnownStart, minConfidence]);
 
   return <canvas style={{ height: '100%', width: '100%', display: 'block' }} ref={ref} />;
 };
@@ -347,6 +349,8 @@ interface OverlayProps {
 const Overlay: React.FC<OverlayProps> = (props) => {
   const { inferences, videoRef, tKnownStart } = props;
   const canvasRef = React.useRef<HTMLCanvasElement | null>(null);
+
+  const [minConfidence] = useAtom(minConfidenceAtom);
 
   React.useLayoutEffect(() => {
     const video = videoRef.current;
@@ -404,7 +408,7 @@ const Overlay: React.FC<OverlayProps> = (props) => {
       for (const inference of slice) {
         const t_a = 1 - (t - inference.t) / fade;
         for (const hit of inference.hits) {
-          if (hit.c < cMin) continue;
+          if (hit.c < minConfidence) continue;
           renderedHitIds.push(hit.id);
           // const c_a = Math.min(1, (hit.c - cMin) / (cMax - cMin));
           ctx.strokeStyle = `rgba(255, 0, 0, ${t_a})`;
@@ -426,7 +430,7 @@ const Overlay: React.FC<OverlayProps> = (props) => {
     return () => {
       stop = true;
     };
-  }, [inferences, tKnownStart]);
+  }, [inferences, tKnownStart, minConfidence]);
 
   return <canvas style={{ height: '100%', width: '100%', display: 'block' }} ref={canvasRef} />;
 };
