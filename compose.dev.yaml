@@ -54,6 +54,9 @@ services:
       - 9090:9090
     command: server --console-address ":9090" /data
   guns-api:
+    depends_on:
+      - db
+      - minio
     # restart: unless-stopped
     build:
       context: ./api
