@@ -35,7 +35,6 @@ class FileCreateResponse(BaseModel):
 
 class VideoSourceBase(BaseModel):
     name: str
-    t_start: float  # @DOC: unix seconds
 
 
 class VideoSourceCreate(VideoSourceBase):
@@ -45,6 +44,7 @@ class VideoSourceCreate(VideoSourceBase):
 class VideoSource(VideoSourceBase):
     id: int
     file: File
+    t_start: float  # @DOC: unix seconds
 
     class Config:
         from_attributes = True

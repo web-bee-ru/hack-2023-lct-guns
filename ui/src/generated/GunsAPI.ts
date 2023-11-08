@@ -50,13 +50,12 @@ export namespace GunsAPI {
   }
   export interface VideoSource {
     name: string;
-    t_start: number;
     id: number;
     file: GunsAPI.File;
+    t_start: number;
   }
   export interface VideoSourceCreate {
     name: string;
-    t_start: number;
     file_id: number;
   }
 }

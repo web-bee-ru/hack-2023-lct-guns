@@ -31,7 +31,6 @@ import { maybe } from '../lib/utils';
 import axios from 'axios';
 import { Err, None, Ok, Option, Result, Some } from 'ts-results';
 import { SourceRow, SourceRowKind, useSources } from '../lib/SourceRow';
-import { DateTimePicker } from '@mui/x-date-pickers';
 
 export const SourcesPage: React.FC = () => {
   const sources = useSources();
@@ -131,7 +130,6 @@ interface NewFileDialogProps {
 
 const NewFileDialog: React.FC<NewFileDialogProps> = (props) => {
   const [name, setName] = React.useState('');
-  const [startDate, setStartDate] = React.useState<Date | null>(null);
 
   const picker = useFilePicker({
     multiple: false,
@@ -189,11 +187,9 @@ const NewFileDialog: React.FC<NewFileDialogProps> = (props) => {
 
   const canCreate = name.trim() !== '' && result.some && result.val.ok;
   const createSource = React.useCallback(async () => {
-    if (startDate == null) return;
     if (name.trim() === '') return;
     const file = result.expect('Can not create if result is none').expect('Can not create if result is not ok');
-    const tStart = startDate.getTime() / 1000;
-    await taxiosGuns.$post('/v1/video-sources', { name: name.trim(), file_id: file.id, t_start: tStart });
+    await taxiosGuns.$post('/v1/video-sources', { name: name.trim(), file_id: file.id });
     await queryClient.invalidateQueries('sources');
     props.onClose();
 
@@ -256,9 +252,6 @@ const NewFileDialog: React.FC<NewFileDialogProps> = (props) => {
               value={name}
               onChange={(ev) => setName(ev.currentTarget.value)}
             />
-          </FormControl>
-          <FormControl sx={{ mt: 2 }}>
-            <DateTimePicker label={'Время начала видео'} value={startDate} onChange={setStartDate} />
           </FormControl>
         </Box>
       </DialogContent>

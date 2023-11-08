@@ -1,3 +1,5 @@
+import time
+
 from sqlalchemy.orm import Session, joinedload
 
 from . import models, schemas
@@ -35,6 +37,7 @@ def create_video_source(db: Session, source: schemas.VideoSourceCreate):
     for var, value in attrs.items():
         setattr(db_source, var, value)
 
+    db_source.t_start = time.time()
     db.add(db_source)
     db.commit()
     db.refresh(db_source)
