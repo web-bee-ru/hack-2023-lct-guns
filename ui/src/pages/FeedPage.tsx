@@ -400,16 +400,25 @@ const Overlay: React.FC<OverlayProps> = (props) => {
 
       ctx.clearRect(0, 0, width, height);
       const slice = inferences.slice(leftIdx, rightIdx);
+      const renderedHitIds = [];
       for (const inference of slice) {
         const t_a = 1 - (t - inference.t) / fade;
         for (const hit of inference.hits) {
           if (hit.c < cMin) continue;
+          renderedHitIds.push(hit.id);
           // const c_a = Math.min(1, (hit.c - cMin) / (cMax - cMin));
           ctx.strokeStyle = `rgba(255, 0, 0, ${t_a})`;
           ctx.lineWidth = 2;
-          ctx.strokeRect(mx + hit.x * dx, my + hit.y * dy, hit.w * dx, hit.h * dy);
+          // @NOTE: Database x and y are centers of rects
+          ctx.strokeRect(mx + (hit.x - hit.w / 2) * dx, my + (hit.y - hit.h / 2) * dy, hit.w * dx, hit.h * dy);
         }
       }
+
+      // @DEBUG
+      // ctx.font = '20px sans';
+      // ctx.fillStyle = 'red';
+      // ctx.textBaseline = 'top';
+      // ctx.fillText(renderedHitIds.join(', '), 0, 0);
 
       requestAnimationFrame(drawAndSchedule);
     }

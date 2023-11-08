@@ -16,6 +16,7 @@ def infer(frame: np.ndarray, t_seconds: float) -> list[schemas.InferenceHitCreat
     for box in res.boxes:
         x, y, w, h = box.xywhn[0].tolist()
         c = box.conf[0].tolist()
+        # @NOTE: x and y are expected to be centers of the bounding box
         hit = schemas.InferenceHitCreate(x=x, y=y, w=w, h=h, c=c)
         hits.append(hit)
 
