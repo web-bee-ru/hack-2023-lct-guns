@@ -1,3 +1,3 @@
 import { atomWithStorage } from 'jotai/utils';
 
-export const minConfidenceAtom = atomWithStorage('minConfidence', 0.5);
+export const minConfidenceAtom = atomWithStorage('minConfidence', 0.7);

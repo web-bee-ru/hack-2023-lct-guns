@@ -330,7 +330,8 @@ const Timeline: React.FC<TimelineProps> = (props) => {
       const dw = 15 * dt;
       ctx.strokeRect(margin + (t - tStart) * dx - dw / 2, 0, dw, height);
 
-      requestAnimationFrame(drawAndSchedule);
+      video.requestVideoFrameCallback(drawAndSchedule);
+      // requestAnimationFrame(drawAndSchedule);
     }
     drawAndSchedule();
     return () => {
@@ -391,7 +392,7 @@ const Overlay: React.FC<OverlayProps> = (props) => {
       const [tStart, _tEnd] = tKnownStart ? [tKnownStart, tKnownStart + video.duration] : [now - video.duration, now];
       const t = tStart + video.currentTime;
 
-      const fade = 0.25;
+      const fade = 1;
 
       let leftIdx = 0;
       while (leftIdx < inferences.length && inferences[leftIdx].t < t - fade) {
@@ -424,7 +425,8 @@ const Overlay: React.FC<OverlayProps> = (props) => {
       // ctx.textBaseline = 'top';
       // ctx.fillText(renderedHitIds.join(', '), 0, 0);
 
-      requestAnimationFrame(drawAndSchedule);
+      video.requestVideoFrameCallback(drawAndSchedule);
+      // requestAnimationFrame(drawAndSchedule);
     }
     drawAndSchedule();
     return () => {

@@ -1,7 +1,6 @@
 import { GunsAPI } from '../generated/GunsAPI';
 import { useQuery } from 'react-query';
 import { taxiosGuns } from '../api';
-import { it } from 'date-fns/locale';
 import { sortBy } from 'lodash';
 
 export enum SourceRowKind {

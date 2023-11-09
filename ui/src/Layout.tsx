@@ -18,10 +18,10 @@ export const Layout: React.FC = () => {
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <InputLabel sx={{ flexShrink: 0, mr: 2 }}>Порог</InputLabel>
             <Slider
-              sx={{ minWidth: 100 }}
+              sx={{ minWidth: 300 }}
               min={0}
               max={1}
-              step={0.05}
+              step={0.01}
               value={minConfidence}
               onChange={(_ev, newValue) => setMinConfidence(newValue as number)}
             />

@@ -6,7 +6,7 @@ from botocore.client import BaseClient
 from dotenv import load_dotenv
 from starlette.responses import JSONResponse
 
-from src.ml.guns import infer
+from src.ml.guns import Runner
 
 load_dotenv()
 
@@ -128,6 +128,7 @@ async def infer_video_source_task(
         ExpiresIn=3600)
 
     def run():
+        runner = Runner()
         cap = cv2.VideoCapture(url)
         n_frames = 0
         # start_time = time.time()
@@ -152,7 +153,7 @@ async def infer_video_source_task(
 
             status, frame = cap.retrieve()
 
-            hits = infer(frame, dpt)
+            hits = runner.infer(frame, dpt)
             inference = schemas.InferenceCreate(t=pt, hits=hits, source_kind=schemas.SourceKind.Video, source_id=db_source.id)
             crud.create_inference(db, inference)
 
