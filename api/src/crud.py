@@ -131,6 +131,11 @@ def get_camera_sources(db: Session):
     return db_sources
 
 
+def get_camera_source(db: Session, source_id: int):
+    db_source = db.get(models.CameraSource, source_id)
+    return db_source
+
+
 def create_camera_source(db: Session, source: schemas.CameraSourceCreate, mmtx_name: str):
     db_source = models.CameraSource()
 

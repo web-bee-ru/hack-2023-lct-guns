@@ -180,6 +180,71 @@ async def infer_video_source_task(
 
     await asyncio.to_thread(run)
 
+
+async def infer_camera_source_task(
+        source_id: int,
+        db: Session,
+        s3_client: BaseClient,
+):
+    db_source = crud.get_camera_source(db, source_id)
+    if db_source is None:
+        return
+
+    if not db_source.is_active:
+        return
+
+    url = db_source.url
+
+    def run():
+        runner = Runner()
+        cap = cv2.VideoCapture(url)
+        n_frames = 0
+        # start_time = time.time()
+        crud.destroy_inferences(db, schemas.SourceKind.Video, db_source.id)
+
+        rt_start = time.time()
+
+        # inference_buffer = []
+        # def push_inferences() -> bool:
+        #     crud.create_inferences(db, inference_buffer)
+        #     inference_buffer.clear()
+        #     db.refresh(db_source)
+        #     return db_source.is_active
+
+        while True:
+            ret = cap.grab()
+            if not ret:
+                break
+
+            dpt = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000
+            drt = time.time() - rt_start
+
+            # @NOTE: Skip frames if we are behind realtime
+            if dpt / drt < 1:
+                continue
+
+            pt = db_source.t_start + dpt
+
+            status, frame = cap.retrieve()
+
+            hits = runner.infer(frame, dpt)
+            inference = schemas.InferenceCreate(t=pt, hits=hits, source_kind=schemas.SourceKind.Camera, source_id=db_source.id)
+            # inference_buffer.append(inference)
+            crud.create_inference(db, inference)
+
+            n_frames += 1
+            if n_frames % 100 == 0:
+                print(f'Processed {n_frames} frames')
+
+            # if len(inference_buffer) == 25:
+            #     still_active = push_inferences()
+            #     if not still_active:
+            #         break
+        cap.release()
+        # push_inferences()
+
+    await asyncio.to_thread(run)
+
 @app.post('/v1/video-sources')
 def create_video_source(
         source: schemas.VideoSourceCreate,
@@ -245,10 +310,15 @@ def read_camera_sources(db: Session = Depends(get_db)) -> list[schemas.CameraSou
 
 
 @app.post('/v1/camera-sources')
-def create_camera_source(source: schemas.CameraSourceCreate, db: Session = Depends(get_db)) -> schemas.CameraSource:
+def create_camera_source(
+        source: schemas.CameraSourceCreate,
+        background_tasks: BackgroundTasks,
+        db: Session = Depends(get_db),
+        s3_client = Depends(get_s3_client),
+) -> schemas.CameraSource:
     mmtx_name = str(uuid.uuid4())
     db_source = crud.create_camera_source(db, source, mmtx_name)
-    # background_tasks.add_task(infer_camera_source_task, db_source.id, db, s3_client)
+    background_tasks.add_task(infer_camera_source_task, db_source.id, db, s3_client)
     return db_source
 
 
@@ -263,7 +333,7 @@ def update_camera_source(
     db_source = crud.update_camera_source(db, source_id, source)
     if db_source is None:
         raise HTTPException(status_code=404, detail="Source not found")
-    # background_tasks.add_task(infer_camera_source_task, db_source.id, db, s3_client)
+    background_tasks.add_task(infer_camera_source_task, db_source.id, db, s3_client)
     return db_source
 
 
