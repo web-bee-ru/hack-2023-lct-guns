@@ -65,7 +65,7 @@ class CameraSourceBase(BaseModel):
 
 
 class CameraSourceCreate(CameraSourceBase):
-    url: str
+    private_url: str
 
 
 class CameraSourceUpdate(CameraSourceBase):

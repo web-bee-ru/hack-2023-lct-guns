@@ -35,7 +35,8 @@ class CameraSource(Base):
     is_active = Column(Boolean)
     deleted_at = Column(DateTime, nullable=True)
     name = Column(String)
-    url = Column(String)
+    url = Column(String, comment="Stripped of basic auth to display in user interface")
+    private_url = Column(String)
     mmtx_name = Column(String)
 
 

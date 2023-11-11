@@ -121,6 +121,7 @@ def destroy_video_source(db: Session, source_id: int):
         return None
 
     db_source.deleted_at = datetime.datetime.now()
+    db_source.is_active = False
     db.commit()
 
     return True
@@ -143,6 +144,7 @@ def create_camera_source(db: Session, source: schemas.CameraSourceCreate, mmtx_n
     for var, value in attrs.items():
         setattr(db_source, var, value)
 
+    db_source.url = db_source.private_url # @WIP: Strip of the username and password if present
     db_source.mmtx_name = mmtx_name
     db.add(db_source)
     db.commit()
@@ -169,6 +171,7 @@ def destroy_camera_source(db: Session, source_id: int):
         return None
 
     db_source.deleted_at = datetime.datetime.now()
+    db_source.is_active = False
     db.commit()
 
     return True

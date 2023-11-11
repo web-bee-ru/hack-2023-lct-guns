@@ -2,6 +2,7 @@ import asyncio
 import time
 
 import cv2
+import httpx
 from botocore.client import BaseClient
 from dotenv import load_dotenv
 from starlette.responses import JSONResponse
@@ -163,7 +164,8 @@ async def infer_video_source_task(
             status, frame = cap.retrieve()
 
             hits = runner.infer(frame, dpt)
-            inference = schemas.InferenceCreate(t=pt, hits=hits, source_kind=schemas.SourceKind.Video, source_id=db_source.id)
+            inference = schemas.InferenceCreate(t=pt, hits=hits, source_kind=schemas.SourceKind.Video,
+                                                source_id=db_source.id)
             # inference_buffer.append(inference)
             crud.create_inference(db, inference)
 
@@ -171,10 +173,10 @@ async def infer_video_source_task(
             if n_frames % 100 == 0:
                 print(f'Processed {n_frames} frames')
 
-            # if len(inference_buffer) == 25:
-            #     still_active = push_inferences()
-            #     if not still_active:
-            #         break
+            if n_frames % 25 == 0:
+                db.refresh(db_source)
+                if not db_source.is_active:
+                    break
         cap.release()
         # push_inferences()
 
@@ -193,7 +195,7 @@ async def infer_camera_source_task(
     if not db_source.is_active:
         return
 
-    url = db_source.url
+    url = db_source.private_url
 
     def run():
         runner = Runner()
@@ -223,12 +225,13 @@ async def infer_camera_source_task(
             if dpt / drt < 1:
                 continue
 
-            pt = db_source.t_start + dpt
+            pt = rt_start + dpt
 
             status, frame = cap.retrieve()
 
             hits = runner.infer(frame, dpt)
-            inference = schemas.InferenceCreate(t=pt, hits=hits, source_kind=schemas.SourceKind.Camera, source_id=db_source.id)
+            inference = schemas.InferenceCreate(t=pt, hits=hits, source_kind=schemas.SourceKind.Camera,
+                                                source_id=db_source.id)
             # inference_buffer.append(inference)
             crud.create_inference(db, inference)
 
@@ -236,21 +239,22 @@ async def infer_camera_source_task(
             if n_frames % 100 == 0:
                 print(f'Processed {n_frames} frames')
 
-            # if len(inference_buffer) == 25:
-            #     still_active = push_inferences()
-            #     if not still_active:
-            #         break
+            if n_frames % 25 == 0:
+                db.refresh(db_source)
+                if not db_source.is_active:
+                    break
         cap.release()
         # push_inferences()
 
     await asyncio.to_thread(run)
+
 
 @app.post('/v1/video-sources')
 def create_video_source(
         source: schemas.VideoSourceCreate,
         background_tasks: BackgroundTasks,
         db: Session = Depends(get_db),
-        s3_client = Depends(get_s3_client),
+        s3_client=Depends(get_s3_client),
 ) -> schemas.VideoSource:
     db_source = crud.create_video_source(db, source)
     background_tasks.add_task(infer_video_source_task, db_source.id, db, s3_client)
@@ -263,7 +267,7 @@ def update_video_source(
         source: schemas.VideoSourceUpdate,
         background_tasks: BackgroundTasks,
         db: Session = Depends(get_db),
-        s3_client = Depends(get_s3_client),
+        s3_client=Depends(get_s3_client),
 ) -> schemas.VideoSource:
     db_source = crud.update_video_source(db, source_id, source)
     if db_source is None:
@@ -272,13 +276,12 @@ def update_video_source(
     return db_source
 
 
-
 @app.post('/v1/video-sources/{source_id}/tasks/infer')
 def infer_video_source(
         source_id: int,
         background_tasks: BackgroundTasks,
         db: Session = Depends(get_db),
-        s3_client = Depends(get_s3_client),
+        s3_client=Depends(get_s3_client),
 ) -> schemas.VideoSource:
     db_source = crud.get_video_source(db, source_id)
     if db_source is None:
@@ -296,7 +299,8 @@ def destroy_video_source(source_id: int, db: Session = Depends(get_db)) -> schem
 
 
 @app.get("/v1/video-sources/{source_id}/inferences")
-def get_video_inferences(source_id: int, db: Session = Depends(get_db), since_t: float = 0, limit: int = 1000) -> list[schemas.Inference]:
+def get_video_inferences(source_id: int, db: Session = Depends(get_db), since_t: float = 0, limit: int = 1000) -> list[
+    schemas.Inference]:
     db_inferences = crud.get_inferences(db, schemas.SourceKind.Video, source_id, since_t, limit)
     # @PERF: SQLAlchemy and Pydantic are sorta slow here when getting initial list,
     #        but we manage by using t as cursor
@@ -310,13 +314,15 @@ def read_camera_sources(db: Session = Depends(get_db)) -> list[schemas.CameraSou
 
 
 @app.post('/v1/camera-sources')
-def create_camera_source(
+async def create_camera_source(
         source: schemas.CameraSourceCreate,
         background_tasks: BackgroundTasks,
         db: Session = Depends(get_db),
-        s3_client = Depends(get_s3_client),
+        s3_client=Depends(get_s3_client),
 ) -> schemas.CameraSource:
     mmtx_name = str(uuid.uuid4())
+    mmtx_base_url = getenv("MMTX_API_URL")
+    httpx.post(mmtx_base_url + f'/v3/config/paths/add/{mmtx_name}', json={'source': source.private_url.strip()})
     db_source = crud.create_camera_source(db, source, mmtx_name)
     background_tasks.add_task(infer_camera_source_task, db_source.id, db, s3_client)
     return db_source
@@ -328,9 +334,23 @@ def update_camera_source(
         source: schemas.CameraSourceUpdate,
         background_tasks: BackgroundTasks,
         db: Session = Depends(get_db),
-        s3_client = Depends(get_s3_client),
+        s3_client=Depends(get_s3_client),
 ) -> schemas.CameraSource:
     db_source = crud.update_camera_source(db, source_id, source)
+    if db_source is None:
+        raise HTTPException(status_code=404, detail="Source not found")
+    background_tasks.add_task(infer_camera_source_task, db_source.id, db, s3_client)
+    return db_source
+
+
+@app.post('/v1/camera-sources/{source_id}/tasks/infer')
+def infer_camera_source(
+        source_id: int,
+        background_tasks: BackgroundTasks,
+        db: Session = Depends(get_db),
+        s3_client=Depends(get_s3_client),
+) -> schemas.CameraSource:
+    db_source = crud.get_camera_source(db, source_id)
     if db_source is None:
         raise HTTPException(status_code=404, detail="Source not found")
     background_tasks.add_task(infer_camera_source_task, db_source.id, db, s3_client)
@@ -346,8 +366,9 @@ def destroy_camera_source(source_id: int, db: Session = Depends(get_db)) -> sche
 
 
 @app.get("/v1/camera-sources/{source_id}/inferences")
-def get_camera_inferences(source_id: int, db: Session = Depends(get_db), since_t: float = 0, limit: int = 1000) -> list[schemas.Inference]:
-    db_inferences = crud.get_inferences(db, schemas.SourceKind.Video, source_id, since_t, limit)
+def get_camera_inferences(source_id: int, db: Session = Depends(get_db), since_t: float = 0, limit: int = 1000) -> list[
+    schemas.Inference]:
+    db_inferences = crud.get_inferences(db, schemas.SourceKind.Camera, source_id, since_t, limit)
     # @PERF: SQLAlchemy and Pydantic are sorta slow here when getting initial list,
     #        but we manage by using t as cursor
     return db_inferences
