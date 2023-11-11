@@ -1,11 +1,7 @@
 :80 {
-  # basicauth /ui* {
-  #   Bob $2a$14$Zkx19XLiW6VYouLHR5NmfOFU0z2GTNmpkT/5qqR7hx4IjWJPDhjvG
-  # }
-  # basicauth /api* {
-  #   Bob $2a$14$Zkx19XLiW6VYouLHR5NmfOFU0z2GTNmpkT/5qqR7hx4IjWJPDhjvG
-  # }
-
+  basicauth /ui* {
+    lct-guns $2a$14$Zkx19XLiW6VYouLHR5NmfOFU0z2GTNmpkT/5qqR7hx4IjWJPDhjvG
+  }
   redir / /ui
   handle /ui* {
     # uri strip_prefix /ui
@@ -25,7 +21,9 @@
   }
   handle /s3* {
     uri strip_prefix /s3
-    reverse_proxy host.docker.internal:9000 # minio
+    reverse_proxy host.docker.internal:9000 {
+      header_up -Authorization
+    }
   }
   respond * 404 {
     close
