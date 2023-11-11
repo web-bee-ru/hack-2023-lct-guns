@@ -10,7 +10,7 @@ export namespace GunsAPI {
   export interface CameraSourceCreate {
     name: string;
     is_active: boolean;
-    url: string;
+    private_url: string;
   }
   export interface CameraSourceUpdate {
     name?: string;
@@ -146,6 +146,14 @@ export interface GunsAPI {
       };
       PATCH: {
         body: GunsAPI.CameraSourceUpdate;
+        params: {
+          source_id: number;
+        };
+        response: GunsAPI.CameraSource;
+      };
+    };
+    '/v1/camera-sources/{source_id}/tasks/infer': {
+      POST: {
         params: {
           source_id: number;
         };

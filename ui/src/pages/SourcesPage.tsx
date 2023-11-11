@@ -324,7 +324,7 @@ const NewCameraDialog: React.FC<NewCameraDialogProps> = (props) => {
 
   const canCreate = name.trim() !== '' && url.trim() != '' && url != DEFAULT_RTSP_URL;
   const createSource = React.useCallback(async () => {
-    await taxiosGuns.$post('/v1/camera-sources', { name, url, is_active: true });
+    await taxiosGuns.$post('/v1/camera-sources', { name, private_url: url, is_active: true });
     await queryClient.invalidateQueries('sources');
     props.onClose();
 
