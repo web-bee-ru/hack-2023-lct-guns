@@ -21,7 +21,6 @@ import {
   TableHead,
   TableRow,
   TextField,
-  ToggleButton,
 } from '@mui/material';
 import React from 'react';
 import { makeHlsHref, makeS3Href, queryClient, taxiosGuns } from '../api';
@@ -145,7 +144,12 @@ export const SourcesPage: React.FC = () => {
               <TableCell sx={{ minWidth: 150 }}>Название</TableCell>
               <TableCell>Адрес</TableCell>
               <TableCell>Источник</TableCell>
-              <TableCell>Активен</TableCell>
+              <TableCell
+                title="Неактивные источники не анализируются моделью"
+                sx={{ textDecoration: 'underline', textDecorationStyle: 'dotted' }}
+              >
+                Активен
+              </TableCell>
               <TableCell></TableCell>
             </TableRow>
           </TableHead>
@@ -232,7 +236,7 @@ const NewFileDialog: React.FC<NewFileDialogProps> = (props) => {
   const createSource = React.useCallback(async () => {
     if (name.trim() === '') return;
     const file = result.expect('Can not create if result is none').expect('Can not create if result is not ok');
-    await taxiosGuns.$post('/v1/video-sources', { name: name.trim(), file_id: file.id });
+    await taxiosGuns.$post('/v1/video-sources', { name: name.trim(), file_id: file.id, is_active: true });
     await queryClient.invalidateQueries('sources');
     props.onClose();
 
@@ -320,7 +324,7 @@ const NewCameraDialog: React.FC<NewCameraDialogProps> = (props) => {
 
   const canCreate = name.trim() !== '' && url.trim() != '' && url != DEFAULT_RTSP_URL;
   const createSource = React.useCallback(async () => {
-    await taxiosGuns.$post('/v1/camera-sources', { name, url });
+    await taxiosGuns.$post('/v1/camera-sources', { name, url, is_active: true });
     await queryClient.invalidateQueries('sources');
     props.onClose();
 

@@ -136,7 +136,16 @@ const VideoSourceDisplay: React.FC<VideoSourceDisplayProps> = (props) => {
         sx={{ ml: 1, flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'black' }}
       >
         <Box sx={{ flexGrow: 1, flexShrink: 0, position: 'relative' }}>
-          <video ref={videoRef} controls muted autoPlay width="100%" height="100%" src={makeS3Href(source)} />
+          <video
+            style={{ maxHeight: 'calc(100vh - 170px)' }}
+            ref={videoRef}
+            controls
+            muted
+            autoPlay
+            width="100%"
+            height="100%"
+            src={makeS3Href(source)}
+          />
           {inferences.data && (
             <Box sx={{ position: 'absolute', top: 0, left: 0, bottom: 0, right: 0, pointerEvents: 'none' }}>
               <Overlay videoRef={videoRef} inferences={inferences.data.pages.flat()} tKnownStart={source.t_start} />
@@ -149,7 +158,7 @@ const VideoSourceDisplay: React.FC<VideoSourceDisplayProps> = (props) => {
           )}
         </Box>
       </Paper>
-      <Paper sx={{ mr: 1, ml: 1, p: 1, width: 400, flexGrow: 0, flexShrink: 0 }}>
+      <Paper sx={{ mr: 1, ml: 1, p: 1, width: 400, flexGrow: 0, flexShrink: 0, display: 'none' }}>
         {/*@WIP: Таймлайн с найденными изображениями*/}
       </Paper>
     </Box>
@@ -221,7 +230,16 @@ const CameraSourceDisplay: React.FC<CameraSourceDisplayProps> = (props) => {
         sx={{ ml: 1, flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'black' }}
       >
         <Box sx={{ flexGrow: 1, flexShrink: 0, position: 'relative' }}>
-          <video ref={videoRef} controls muted autoPlay width="100%" height="100%" src={makeHlsHref(source)} />
+          <video
+            style={{ maxHeight: 'calc(100vh - 170px)' }}
+            ref={videoRef}
+            controls
+            muted
+            autoPlay
+            width="100%"
+            height="100%"
+            src={makeHlsHref(source)}
+          />
           {inferences.data && (
             <Box sx={{ position: 'absolute', top: 0, left: 0, bottom: 0, right: 0, pointerEvents: 'none' }}>
               <Overlay videoRef={videoRef} inferences={inferences.data.pages.flat()} />
@@ -232,7 +250,7 @@ const CameraSourceDisplay: React.FC<CameraSourceDisplayProps> = (props) => {
           {inferences.data && <Timeline videoRef={videoRef} inferences={inferences.data.pages.flat()} />}
         </Box>
       </Paper>
-      <Paper sx={{ mr: 1, ml: 1, p: 1, width: 400, flexGrow: 0, flexShrink: 0 }}>
+      <Paper sx={{ mr: 1, ml: 1, p: 1, width: 400, flexGrow: 0, flexShrink: 0, display: 'none' }}>
         {/*@WIP: Таймлайн с найденными изображениями*/}
       </Paper>
     </Box>
@@ -392,7 +410,7 @@ const Overlay: React.FC<OverlayProps> = (props) => {
       const [tStart, _tEnd] = tKnownStart ? [tKnownStart, tKnownStart + video.duration] : [now - video.duration, now];
       const t = tStart + video.currentTime;
 
-      const fade = 1;
+      const fade = 0.3;
 
       let leftIdx = 0;
       while (leftIdx < inferences.length && inferences[leftIdx].t < t - fade) {
