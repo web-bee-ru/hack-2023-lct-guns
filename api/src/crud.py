@@ -1,3 +1,4 @@
+import datetime
 import time
 
 from sqlalchemy.orm import Session, joinedload
@@ -21,7 +22,7 @@ def create_file(db: Session, file: schemas.FileCreate, s3_bucket: str, s3_key: s
 
 
 def get_video_sources(db: Session):
-    db_sources = db.query(models.VideoSource).all()
+    db_sources = db.query(models.VideoSource).filter(models.VideoSource.deleted_at == None).all()
     return db_sources
 
 
@@ -44,14 +45,27 @@ def create_video_source(db: Session, source: schemas.VideoSourceCreate):
     return db_source
 
 
+def update_video_source(db: Session, source_id: int, source: schemas.VideoSourceUpdate):
+    db_source = db.get(models.VideoSource, source_id)
+    if db_source is None:
+        return None
+
+    attrs = source.dict(exclude_unset=True)
+    for var, value in attrs.items():
+        setattr(db_source, var, value)
+
+    db.commit()
+    db.refresh(db_source)
+    return db_source
+
+
 def destroy_inferences(db: Session, source_kind: schemas.SourceKind, source_id: int):
     db_inferences_query = db.query(models.Inference).filter_by(source_kind=source_kind, source_id=source_id)
-    for db_inference in db_inferences_query.all():
-        db_inference_hits_query = db.query(models.InferenceHit).filter_by(inference_id=db_inference.id)
-        db_inference_hits_query.delete()
+    db_inference_ids_query = db_inferences_query.with_entities(models.Inference.id)
+    db_hits_query = db.query(models.InferenceHit).filter(models.InferenceHit.inference_id.in_(db_inference_ids_query.subquery()))
+    db_hits_query.delete()
     db_inferences_query.delete()
     db.commit()
-
     return True
 
 def create_inference(db: Session, inference: schemas.InferenceCreate):
@@ -76,19 +90,44 @@ def create_inference(db: Session, inference: schemas.InferenceCreate):
     return db_inference
 
 
+def create_inferences(db: Session, inferences: list[schemas.InferenceCreate]):
+    db_inferences = []
+    for inference in inferences:
+        db_inference = models.Inference()
+
+        attrs = inference.dict(exclude_unset=True)
+        del attrs['hits']
+        for var, value in attrs.items():
+            setattr(db_inference, var, value)
+
+        for hit in inference.hits:
+            db_hit = models.InferenceHit()
+            attrs = hit.dict(exclude_unset=True)
+            for var, value in attrs.items():
+                setattr(db_hit, var, value)
+
+            db_inference.hits.append(db_hit)
+
+        db_inferences.append(db_inference)
+
+    db.bulk_save_objects(db_inferences)
+    db.commit()
+    return True
+
+
 def destroy_video_source(db: Session, source_id: int):
     db_source = db.get(models.VideoSource, source_id)
     if db_source is None:
         return None
 
-    db.delete(db_source)
+    db_source.deleted_at = datetime.datetime.now()
     db.commit()
 
     return True
 
 
 def get_camera_sources(db: Session):
-    db_sources = db.query(models.CameraSource).all()
+    db_sources = db.query(models.CameraSource).filter(models.CameraSource.deleted_at == None).all()
     return db_sources
 
 
@@ -106,12 +145,25 @@ def create_camera_source(db: Session, source: schemas.CameraSourceCreate, mmtx_n
     return db_source
 
 
+def update_camera_source(db: Session, source_id: int, source: schemas.CameraSourceUpdate):
+    db_source = db.get(models.CameraSource, source_id)
+    if db_source is None:
+        return None
+
+    attrs = source.dict(exclude_unset=True)
+    for var, value in attrs.items():
+        setattr(db_source, var, value)
+
+    db.commit()
+    db.refresh(db_source)
+    return db_source
+
 def destroy_camera_source(db: Session, source_id: int):
     db_source = db.get(models.CameraSource, source_id)
     if db_source is None:
         return None
 
-    db.delete(db_source)
+    db_source.deleted_at = datetime.datetime.now()
     db.commit()
 
     return True

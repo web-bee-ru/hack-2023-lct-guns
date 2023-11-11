@@ -195,8 +195,8 @@ const CameraSourceDisplay: React.FC<CameraSourceDisplayProps> = (props) => {
       return inferences;
     },
     {
-      getNextPageParam: (lastPage) => {
-        return max(lastPage.map((it) => it.t));
+      getNextPageParam: (_lastPage, pages) => {
+        return max(pages.flat().map((it) => it.t));
       },
     },
   );
@@ -209,7 +209,7 @@ const CameraSourceDisplay: React.FC<CameraSourceDisplayProps> = (props) => {
     if (!pages) return;
     const tid = setTimeout(() => {
       inferences.fetchNextPage();
-    }, 500);
+    }, 1000);
     return () => {
       clearTimeout(tid);
     };

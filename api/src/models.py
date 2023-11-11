@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Enum, JSON, Double
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Enum, JSON, Double, DateTime
 from sqlalchemy.orm import relationship, Mapped
 
 from src.database import Base
@@ -19,6 +19,8 @@ class VideoSource(Base):
     __tablename__ = "video_sources"
 
     id = Column(Integer, primary_key=True, index=True)
+    is_active = Column(Boolean)
+    deleted_at = Column(DateTime, nullable=True)
     name = Column(String)
     t_start = Column(Double)
     file_id = Column(Integer, ForeignKey("files.id"))
@@ -30,6 +32,8 @@ class CameraSource(Base):
     __tablename__ = "camera_sources"
 
     id = Column(Integer, primary_key=True, index=True)
+    is_active = Column(Boolean)
+    deleted_at = Column(DateTime, nullable=True)
     name = Column(String)
     url = Column(String)
     mmtx_name = Column(String)
@@ -56,6 +60,7 @@ class InferenceHit(Base):
     w = Column(Double)
     h = Column(Double)
     c = Column(Double, comment='Confidence')
+    track_id = Column(Integer, nullable=True)
 
     inference_id = Column(Integer, ForeignKey("inferences.id"))
     inference = relationship("Inference", back_populates="hits")

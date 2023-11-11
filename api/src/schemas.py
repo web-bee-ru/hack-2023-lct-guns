@@ -1,3 +1,4 @@
+from datetime import datetime
 from enum import Enum
 
 from pydantic import BaseModel, json
@@ -35,14 +36,22 @@ class FileCreateResponse(BaseModel):
 
 class VideoSourceBase(BaseModel):
     name: str
+    is_active: bool
 
 
 class VideoSourceCreate(VideoSourceBase):
     file_id: int
 
 
+class VideoSourceUpdate(VideoSourceBase):
+    name: str = None
+    is_active: bool = None
+    pass
+
+
 class VideoSource(VideoSourceBase):
     id: int
+    deleted_at: datetime | None
     file: File
     t_start: float  # @DOC: unix seconds
 
@@ -52,15 +61,23 @@ class VideoSource(VideoSourceBase):
 
 class CameraSourceBase(BaseModel):
     name: str
-    url: str
+    is_active: bool
 
 
 class CameraSourceCreate(CameraSourceBase):
+    url: str
+
+
+class CameraSourceUpdate(CameraSourceBase):
+    name: str = None
+    is_active: bool = None
     pass
 
 
 class CameraSource(CameraSourceBase):
     id: int
+    deleted_at: datetime | None
+    url: str
     mmtx_name: str
 
     class Config:
@@ -81,12 +98,16 @@ class InferenceHitBase(BaseModel):
     w: float
     h: float
     c: float
+    track_id: int | None
 
     class Config:
         from_attributes = True
 
+
 class InferenceHitCreate(InferenceHitBase):
+    track_id: int
     pass
+
 
 class InferenceHit(InferenceHitBase):
     id: int

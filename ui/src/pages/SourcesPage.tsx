@@ -13,6 +13,7 @@ import {
   ListItemIcon,
   ListItemText,
   Paper,
+  Switch,
   Table,
   TableBody,
   TableCell,
@@ -20,6 +21,7 @@ import {
   TableHead,
   TableRow,
   TextField,
+  ToggleButton,
 } from '@mui/material';
 import React from 'react';
 import { makeHlsHref, makeS3Href, queryClient, taxiosGuns } from '../api';
@@ -31,19 +33,41 @@ import { maybe } from '../lib/utils';
 import axios from 'axios';
 import { Err, None, Ok, Option, Result, Some } from 'ts-results';
 import { SourceRow, SourceRowKind, useSources } from '../lib/SourceRow';
+import { Link } from 'react-router-dom';
+import MonitorIcon from '@mui/icons-material/Monitor';
 
 export const SourcesPage: React.FC = () => {
   const sources = useSources();
 
   const destroyVideoSource = React.useCallback(async (source: GunsAPI.VideoSource) => {
+    const ok = confirm('Вы уверены?');
+    if (!ok) return;
     await taxiosGuns.$delete('/v1/video-sources/{source_id}', { params: { source_id: source.id } });
     await queryClient.invalidateQueries('sources');
   }, []);
 
   const destroyCameraSource = React.useCallback(async (source: GunsAPI.CameraSource) => {
+    const ok = confirm('Вы уверены?');
+    if (!ok) return;
     await taxiosGuns.$delete('/v1/camera-sources/{source_id}', { params: { source_id: source.id } });
     await queryClient.invalidateQueries('sources');
   }, []);
+
+  const updateVideoSource = React.useCallback(
+    async (source: GunsAPI.VideoSource, update: GunsAPI.VideoSourceUpdate) => {
+      await taxiosGuns.$patch('/v1/video-sources/{source_id}', update, { params: { source_id: source.id } });
+      await queryClient.invalidateQueries('sources');
+    },
+    [],
+  );
+
+  const updateCameraSource = React.useCallback(
+    async (source: GunsAPI.CameraSource, update: GunsAPI.CameraSourceUpdate) => {
+      await taxiosGuns.$patch('/v1/camera-sources/{source_id}', update, { params: { source_id: source.id } });
+      await queryClient.invalidateQueries('sources');
+    },
+    [],
+  );
 
   const [newFileDialog, setNewFileDialog] = React.useState(false);
   const [newCameraDialog, setNewCameraDialog] = React.useState(false);
@@ -61,7 +85,16 @@ export const SourcesPage: React.FC = () => {
             <TableCell>{makeS3Href(source)}</TableCell>
             <TableCell>{source.file.name}</TableCell>
             <TableCell>
-              <IconButton onClick={() => destroyVideoSource(source)}>
+              <Switch
+                checked={source.is_active}
+                onChange={(ev) => updateVideoSource(source, { is_active: ev.currentTarget.checked })}
+              />
+            </TableCell>
+            <TableCell>
+              <IconButton title="Просмотр" component={Link} to={`/feed?source=${row.uid}`}>
+                <MonitorIcon />
+              </IconButton>
+              <IconButton title="Удалить" onClick={() => destroyVideoSource(source)}>
                 <DeleteIcon />
               </IconButton>
             </TableCell>
@@ -79,7 +112,16 @@ export const SourcesPage: React.FC = () => {
             <TableCell>{makeHlsHref(source)}</TableCell>
             <TableCell>{source.url}</TableCell>
             <TableCell>
-              <IconButton onClick={() => destroyCameraSource(source)}>
+              <Switch
+                checked={source.is_active}
+                onChange={(ev) => updateCameraSource(source, { is_active: ev.currentTarget.checked })}
+              />
+            </TableCell>
+            <TableCell>
+              <IconButton title="Просмотр" component={Link} to={`/feed?source=${row.uid}`}>
+                <MonitorIcon />
+              </IconButton>
+              <IconButton title="Удалить" onClick={() => destroyCameraSource(source)}>
                 <DeleteIcon />
               </IconButton>
             </TableCell>
@@ -103,6 +145,7 @@ export const SourcesPage: React.FC = () => {
               <TableCell sx={{ minWidth: 150 }}>Название</TableCell>
               <TableCell>Адрес</TableCell>
               <TableCell>Источник</TableCell>
+              <TableCell>Активен</TableCell>
               <TableCell></TableCell>
             </TableRow>
           </TableHead>

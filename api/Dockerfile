@@ -6,7 +6,7 @@
 
 
 # @REFERENCE: https://fastapi.tiangolo.com/deployment/docker/#docker-image-with-poetry
-FROM pytorch/pytorch:2.1.0-cuda12.1-cudnn8-runtime as requirements
+FROM pytorch/pytorch:2.1.0-cuda11.8-cudnn8-runtime as requirements
 
 WORKDIR /app
 
@@ -18,7 +18,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     --mount=type=bind,source=poetry.lock,target=poetry.lock \
     poetry export -f requirements.txt --output requirements.txt --without-hashes
 
-FROM pytorch/pytorch:2.1.0-cuda12.1-cudnn8-runtime as base
+FROM pytorch/pytorch:2.1.0-cuda11.8-cudnn8-runtime as base
 
 RUN apt-get update
 RUN apt-get install -y libgl1-mesa-dev libglib2.0-0

@@ -1,13 +1,20 @@
 export namespace GunsAPI {
   export interface CameraSource {
     name: string;
-    url: string;
+    is_active: boolean;
     id: number;
+    deleted_at: string | null;
+    url: string;
     mmtx_name: string;
   }
   export interface CameraSourceCreate {
     name: string;
+    is_active: boolean;
     url: string;
+  }
+  export interface CameraSourceUpdate {
+    name?: string;
+    is_active?: boolean;
   }
   export interface File {
     name: string;
@@ -38,6 +45,7 @@ export namespace GunsAPI {
     w: number;
     h: number;
     c: number;
+    track_id: number | null;
     id: number;
   }
   export interface Result {
@@ -50,13 +58,20 @@ export namespace GunsAPI {
   }
   export interface VideoSource {
     name: string;
+    is_active: boolean;
     id: number;
+    deleted_at: string | null;
     file: GunsAPI.File;
     t_start: number;
   }
   export interface VideoSourceCreate {
     name: string;
+    is_active: boolean;
     file_id: number;
+  }
+  export interface VideoSourceUpdate {
+    name?: string;
+    is_active?: boolean;
   }
 }
 
@@ -78,20 +93,27 @@ export interface GunsAPI {
         response: GunsAPI.VideoSource;
       };
     };
-    '/v1/video-sources/{source_id}/tasks/infer': {
-      POST: {
-        params: {
-          source_id: number;
-        };
-        response: GunsAPI.VideoSource;
-      };
-    };
     '/v1/video-sources/{source_id}': {
       DELETE: {
         params: {
           source_id: number;
         };
         response: GunsAPI.Result;
+      };
+      PATCH: {
+        body: GunsAPI.VideoSourceUpdate;
+        params: {
+          source_id: number;
+        };
+        response: GunsAPI.VideoSource;
+      };
+    };
+    '/v1/video-sources/{source_id}/tasks/infer': {
+      POST: {
+        params: {
+          source_id: number;
+        };
+        response: GunsAPI.VideoSource;
       };
     };
     '/v1/video-sources/{source_id}/inferences': {
@@ -121,6 +143,13 @@ export interface GunsAPI {
           source_id: number;
         };
         response: GunsAPI.Result;
+      };
+      PATCH: {
+        body: GunsAPI.CameraSourceUpdate;
+        params: {
+          source_id: number;
+        };
+        response: GunsAPI.CameraSource;
       };
     };
     '/v1/camera-sources/{source_id}/inferences': {
